@@ -1,0 +1,40 @@
+[project]
+name = "mcploitable"
+version = "0.1.0"
+description = "A deliberately vulnerable MCP server for agentic-security training, mapped to the OWASP Top 10 for Agentic Applications (ASI). The 'Metasploitable' of MCP."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "mcploitable contributors" }]
+keywords = ["mcp", "security", "training", "owasp", "agentic", "vulnerable", "ctf"]
+dependencies = [
+    "mcp>=1.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+# Combined server (all scenarios) — kept for convenience and the test suite.
+mcploitable = "mcploitable.server:main"
+# One server per vulnerability — each demonstrates a single OWASP ASI scenario.
+mcploitable-asi01 = "mcploitable.server:asi01"
+mcploitable-asi02 = "mcploitable.server:asi02"
+mcploitable-asi03 = "mcploitable.server:asi03"
+mcploitable-asi04 = "mcploitable.server:asi04"
+mcploitable-asi05 = "mcploitable.server:asi05"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcploitable"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]

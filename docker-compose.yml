@@ -1,0 +1,46 @@
+# Isolated run profiles for mcploitable — ONE service per vulnerability.
+#
+# Each service runs a single-vuln server (mcploitable-asiNN) so a given training
+# exercise exposes exactly one OWASP ASI scenario.
+#
+# Containment hardening (shared via the `&hardening` anchor): NO network,
+# read-only root filesystem, dropped Linux capabilities, no privilege escalation.
+# Because this server is deliberately vulnerable, these limits keep a successful
+# exploit boxed inside the container.
+#
+# Usage (stdio MCP server — attach an MCP client to its stdin/stdout):
+#   docker compose build
+#   docker compose run --rm -T asi01      # Agent Goal Hijack only
+#   docker compose run --rm -T asi05      # Unexpected Code Execution only
+
+x-hardening: &hardening
+  build: .
+  image: mcploitable:latest
+  stdin_open: true        # keep stdin open for stdio transport
+  tty: false
+  network_mode: "none"    # no outbound network — exfiltration can't leave
+  read_only: true         # immutable root fs
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  environment:
+    # Flip to "hardened" to run the mitigated reference implementation.
+    MCPLOITABLE_LEVEL: "insecure"
+
+services:
+  asi01:
+    <<: *hardening
+    entrypoint: ["mcploitable-asi01"]   # ASI01 — Agent Goal Hijack
+  asi02:
+    <<: *hardening
+    entrypoint: ["mcploitable-asi02"]   # ASI02 — Tool Misuse & Exploitation
+  asi03:
+    <<: *hardening
+    entrypoint: ["mcploitable-asi03"]   # ASI03 — Identity & Privilege Abuse
+  asi04:
+    <<: *hardening
+    entrypoint: ["mcploitable-asi04"]   # ASI04 — Agentic Supply Chain
+  asi05:
+    <<: *hardening
+    entrypoint: ["mcploitable-asi05"]   # ASI05 — Unexpected Code Execution (RCE)
