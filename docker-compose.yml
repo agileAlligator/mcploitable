@@ -1,17 +1,17 @@
-# Isolated run profiles for mcploitable — ONE service per vulnerability.
+# Isolated run profiles — ONE service per vulnerable server.
 #
-# Each service runs a single-vuln server (mcploitable-asiNN) so a given training
-# exercise exposes exactly one OWASP ASI scenario.
+# Each service runs a standalone, ordinary-looking MCP server that harbours a
+# single latent vulnerability (the ASI tag records which class).
 #
 # Containment hardening (shared via the `&hardening` anchor): NO network,
 # read-only root filesystem, dropped Linux capabilities, no privilege escalation.
-# Because this server is deliberately vulnerable, these limits keep a successful
-# exploit boxed inside the container.
+# Because these servers are deliberately vulnerable, these limits keep a
+# successful exploit boxed inside the container.
 #
 # Usage (stdio MCP server — attach an MCP client to its stdin/stdout):
 #   docker compose build
-#   docker compose run --rm -T asi01      # Agent Goal Hijack only
-#   docker compose run --rm -T asi05      # Unexpected Code Execution only
+#   docker compose run --rm -T helpdesk        # ASI01 — indirect prompt injection
+#   docker compose run --rm -T calc            # ASI05 — code execution
 
 x-hardening: &hardening
   build: .
@@ -24,23 +24,20 @@ x-hardening: &hardening
     - ALL
   security_opt:
     - no-new-privileges:true
-  environment:
-    # Flip to "hardened" to run the mitigated reference implementation.
-    MCPLOITABLE_LEVEL: "insecure"
 
 services:
-  asi01:
+  helpdesk:
     <<: *hardening
-    entrypoint: ["mcploitable-asi01"]   # ASI01 — Agent Goal Hijack
-  asi02:
+    entrypoint: ["helpdesk-ASI01"]        # ASI01 — indirect prompt injection
+  analytics:
     <<: *hardening
-    entrypoint: ["mcploitable-asi02"]   # ASI02 — Tool Misuse & Exploitation
-  asi03:
+    entrypoint: ["analytics-ASI02"]       # ASI02 — over-scoped tools
+  ops:
     <<: *hardening
-    entrypoint: ["mcploitable-asi03"]   # ASI03 — Identity & Privilege Abuse
-  asi04:
+    entrypoint: ["ops-assistant-ASI03"]   # ASI03 — confused-deputy privilege abuse
+  toolhub:
     <<: *hardening
-    entrypoint: ["mcploitable-asi04"]   # ASI04 — Agentic Supply Chain
-  asi05:
+    entrypoint: ["toolhub-ASI04"]         # ASI04 — agentic supply chain
+  calc:
     <<: *hardening
-    entrypoint: ["mcploitable-asi05"]   # ASI05 — Unexpected Code Execution (RCE)
+    entrypoint: ["calc-service-ASI05"]    # ASI05 — unexpected code execution

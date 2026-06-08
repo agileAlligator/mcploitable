@@ -1,35 +1,38 @@
-"""Interactive driver for mcploitable — exercise the server with no MCP client
-or Docker needed. It builds the server in-process and lets you call tools.
+"""Interactive driver — exercise a vulnerable server in-process, no MCP client
+or Docker needed.
 
-Run:
-    PYTHONPATH=src python3 examples/play.py                 # insecure (default)
-    MCPLOITABLE_LEVEL=hardened PYTHONPATH=src python3 examples/play.py
+Run (pick a server by short name: helpdesk, analytics, ops, toolhub, calc):
+    PYTHONPATH=src python3 examples/play.py helpdesk
 
 Commands:
-    list                       list available tools
-    scenarios                  show scenario catalogue + exploit hints
-    call <tool> [json-args]    call a tool, e.g.  call fetch_ticket {"ticket_id":"ticket-1002"}
-    score                      show the CTF scoreboard
-    level <insecure|hardened>  switch security level at runtime
-    reset                      re-seed the sandbox
+    list                       list the server's tools (with descriptions)
+    call <tool> [json-args]    call a tool, e.g.  call get_ticket {"ticket_id":"T-4472"}
     help                       show this help
     quit                       exit
 
 You can also pipe a script of commands in:
-    PYTHONPATH=src python3 examples/play.py < commands.txt
+    PYTHONPATH=src python3 examples/play.py helpdesk < commands.txt
 """
 
 from __future__ import annotations
 
 import asyncio
+import importlib
 import json
 import sys
 from pathlib import Path
 
-# Make the package importable without setting PYTHONPATH.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from mcploitable.server import build_server  # noqa: E402
+_ALIASES = {
+    "helpdesk": "mcploitable.servers.helpdesk",
+    "analytics": "mcploitable.servers.analytics",
+    "ops": "mcploitable.servers.ops_assistant",
+    "toolhub": "mcploitable.servers.toolhub",
+    "calc": "mcploitable.servers.calc_service",
+}
+
+HELP = __doc__.split("Commands:", 1)[1]
 
 
 def _text(res) -> str:
@@ -39,25 +42,21 @@ def _text(res) -> str:
     return "\n".join(getattr(c, "text", str(c)) for c in seq)
 
 
-HELP = __doc__.split("Commands:", 1)[1]
-
-
 async def main() -> None:
-    mcp, _ = build_server()
-    print("mcploitable interactive driver. Type 'help' for commands, 'quit' to exit.\n")
+    if len(sys.argv) < 2 or sys.argv[1] not in _ALIASES:
+        print(f"usage: play.py <{'|'.join(_ALIASES)}>", file=sys.stderr)
+        raise SystemExit(2)
+    mcp = importlib.import_module(_ALIASES[sys.argv[1]]).mcp
+    print(f"driving '{mcp.name}'. Type 'help' for commands, 'quit' to exit.\n")
 
     loop = asyncio.get_event_loop()
     while True:
-        try:
-            line = await loop.run_in_executor(None, sys.stdin.readline)
-        except (EOFError, KeyboardInterrupt):
-            break
-        if not line:  # EOF (piped input ended)
+        line = await loop.run_in_executor(None, sys.stdin.readline)
+        if not line:
             break
         line = line.strip()
         if not line:
             continue
-
         cmd, _, rest = line.partition(" ")
         cmd = cmd.lower()
         try:
@@ -66,23 +65,15 @@ async def main() -> None:
             elif cmd == "help":
                 print(HELP)
             elif cmd == "list":
-                names = sorted(t.name for t in await mcp.list_tools())
-                print("\n".join(names))
-            elif cmd == "scenarios":
-                print(_text(await mcp.call_tool("list_scenarios", {})))
-            elif cmd == "score":
-                print(_text(await mcp.call_tool("scoreboard", {})))
-            elif cmd == "level":
-                print(_text(await mcp.call_tool("set_security_level", {"level": rest.strip()})))
-            elif cmd == "reset":
-                print(_text(await mcp.call_tool("reset_sandbox", {})))
+                for t in await mcp.list_tools():
+                    print(f"- {t.name}: {(t.description or '').splitlines()[0] if t.description else ''}")
             elif cmd == "call":
                 tool, _, arg_str = rest.partition(" ")
                 args = json.loads(arg_str) if arg_str.strip() else {}
                 print(_text(await mcp.call_tool(tool, args)))
             else:
                 print(f"unknown command {cmd!r}; type 'help'.")
-        except Exception as exc:  # surface tool/parse errors to the learner
+        except Exception as exc:  # surface tool/parse errors
             print(f"[error] {type(exc).__name__}: {exc}")
 
 

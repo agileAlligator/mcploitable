@@ -1,7 +1,7 @@
 [project]
 name = "mcploitable"
-version = "0.1.0"
-description = "A deliberately vulnerable MCP server for agentic-security training, mapped to the OWASP Top 10 for Agentic Applications (ASI). The 'Metasploitable' of MCP."
+version = "0.2.0"
+description = "A collection of deliberately vulnerable, ordinary-looking MCP servers for agentic-security research, mapped to the OWASP Top 10 for Agentic Applications (ASI). The 'Metasploitable' of MCP."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -18,14 +18,13 @@ dev = [
 ]
 
 [project.scripts]
-# Combined server (all scenarios) — kept for convenience and the test suite.
-mcploitable = "mcploitable.server:main"
-# One server per vulnerability — each demonstrates a single OWASP ASI scenario.
-mcploitable-asi01 = "mcploitable.server:asi01"
-mcploitable-asi02 = "mcploitable.server:asi02"
-mcploitable-asi03 = "mcploitable.server:asi03"
-mcploitable-asi04 = "mcploitable.server:asi04"
-mcploitable-asi05 = "mcploitable.server:asi05"
+# One standalone server per vulnerability. Each presents as an ordinary tool;
+# the ASI tag in the name records which OWASP ASI class it demonstrates.
+"helpdesk-ASI01" = "mcploitable.servers.helpdesk:main"
+"analytics-ASI02" = "mcploitable.servers.analytics:main"
+"ops-assistant-ASI03" = "mcploitable.servers.ops_assistant:main"
+"toolhub-ASI04" = "mcploitable.servers.toolhub:main"
+"calc-service-ASI05" = "mcploitable.servers.calc_service:main"
 
 [build-system]
 requires = ["hatchling"]
