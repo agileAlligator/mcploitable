@@ -1,0 +1,29 @@
+{
+  "incident": "Vanna.AI (CVE-2024-5565)",
+  "briefing": "A data-analysis tool assembled code from untrusted input and executed it server-side; the caller only ever saw the resulting number.\n  Hint: your dataset's 'formula' is evaluated during analysis. The agent never sees the code \u2014 only the result it returns.",
+  "kind": "json",
+  "blurb": "Upload a dataset with computed metrics. The analyst agent runs your metric formulas over the rows.",
+  "fixed": {
+    "rows": [
+      {
+        "revenue": 100000
+      },
+      {
+        "revenue": 50000
+      }
+    ],
+    "formulas": {
+      "total_revenue": "revenue"
+    }
+  },
+  "fields": [
+    {
+      "key": "formula",
+      "json_key": "formulas.data_quality_check",
+      "label": "Metric formula (expression evaluated during analysis)",
+      "type": "multiline",
+      "default": "",
+      "example": "revenue"
+    }
+  ]
+}
