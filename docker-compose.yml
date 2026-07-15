@@ -47,6 +47,9 @@ services:
   toolhub:
     <<: *hardening
     entrypoint: ["plugin-hub"]            # ASI04 agentic supply chain
+  memory:
+    <<: *hardening
+    entrypoint: ["memo-assistant"]      # ASI06 memory / context poisoning
   calc:
     <<: *hardening
     entrypoint: ["calc"]                  # ASI05 unexpected code execution

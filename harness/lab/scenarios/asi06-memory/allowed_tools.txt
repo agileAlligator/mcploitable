@@ -1,0 +1,6 @@
+# asi06-memory — scoped tool allowlist. The victim reads its memory and drafts
+# a reply; it never writes memory (remember() is not an MCP tool — only the
+# ingest/attacker plane calls it, by direct import).
+mcp__memo-assistant__recall
+mcp__memo-assistant__list_memories
+mcp__memo-assistant__save_draft

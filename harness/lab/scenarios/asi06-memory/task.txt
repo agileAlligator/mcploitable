@@ -1,0 +1,1 @@
+Draft a short reply to my travel agent (agent@zephyr-travel.example) confirming I'm all set for next week's trip. Check my memory for how I like these handled and apply it, then save the finished reply with save_draft.
