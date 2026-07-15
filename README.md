@@ -42,6 +42,13 @@ for the empirical L0→L3 results. Detailed per-server design and solution notes
 maintainer-only (`docs/operator/`, not shipped with the lab) so the boxes stay
 unspoiled.
 
+Play the breakable boxes interactively with `./play` (an attacker REPL — pick a
+box and level, type your payload, watch the agent). The three OWASP classes that
+aren't breakable boxes (ASI08 denial-of-wallet, ASI09 monitoring, ASI10
+governance) ship as guided demonstrations via `./simulate` — see
+[`docs/SIMULATIONS.md`](docs/SIMULATIONS.md) for why those are simulations rather
+than boxes.
+
 ## Quick start (Docker — recommended)
 
 ```bash
