@@ -40,3 +40,6 @@ err.log
 
 # Local Claude Code project MCP config — stale/local; a shipped one would auto-wire vulnerable servers on clone.
 .mcp.json
+
+# Retired pre-redesign servers — scrubbed from history, kept out for good.
+archive/discarded-servers/
