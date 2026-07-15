@@ -19,6 +19,29 @@ breakable "boxes", plus three further classes that ship as guided demonstrations
 > connect them to real credentials, data, or systems. Everything they "leak" is
 > fake.
 
+## Coverage — the full OWASP Agentic Top-10
+
+Seven breakable **boxes** (attack them with `./play` — pick from the menu, type
+your payload, watch the agent) and three guided **simulations** (`./simulate` —
+watch the failure and its deterministic fix):
+
+| # | Class | Modeled on | Format | Scenario |
+|---|-------|-----------|--------|----------|
+| ASI01 | Agent Goal Hijack | EchoLeak (CVE-2025-32711) | box | `asi01-mail` |
+| ASI02 | Tool Misuse | Supabase MCP leak | box | `asi02-analytics` |
+| ASI03 | Identity & Privilege Abuse | Meta HTS takeover | box | `asi03-recovery` |
+| ASI04 | Agentic Supply Chain | SolarWinds / event-stream | box | `asi04-plugin` |
+| ASI05 | Unexpected Code Execution | Vanna.AI (CVE-2024-5565) | box | `asi05-calc` |
+| ASI06 | Memory / Context Poisoning | SpAIware | box | `asi06-memory` |
+| ASI07 | Insecure Agent-to-Agent | cross-agent / A2A trust abuse | box | `asi07-a2a` |
+| ASI08 | Denial-of-Wallet | recursive cost blowout | simulation | `./simulate asi08` |
+| ASI09 | Insufficient Monitoring | silent exfil / dwell time | simulation | `./simulate asi09` |
+| ASI10 | Rogue Agents / Governance | over-scoped agent action | simulation | `./simulate asi10` |
+
+Why boxes for the first seven and simulations for the last three — and the
+empirical L0→L3 results — are in [`docs/RESULTS.md`](docs/RESULTS.md) and
+[`docs/SIMULATIONS.md`](docs/SIMULATIONS.md).
+
 ## Design: the servers don't know they're targets
 
 Unlike a CTF range, these servers carry **no self-awareness**: no scoreboard, no
