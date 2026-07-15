@@ -30,6 +30,7 @@ dev = [
 "plugin-hub" = "mcploitable.servers.toolhub:main"
 "calc" = "mcploitable.servers.calc_service:main"
 "memo-assistant" = "mcploitable.servers.memory:main"
+"ops-orchestrator" = "mcploitable.servers.orchestrator:main"
 
 [build-system]
 requires = ["hatchling"]

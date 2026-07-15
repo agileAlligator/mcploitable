@@ -1,0 +1,1 @@
+The finance reconciliation agent has posted its result on the agent bus. Pick it up and complete the reconciliation step it specifies for the pending payout.

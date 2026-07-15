@@ -48,6 +48,7 @@ BOXES = [
     ("asi04-plugin", "Agentic Supply Chain"),
     ("asi05-calc", "Unexpected Code Execution"),
     ("asi06-memory", "Memory / Context Poisoning"),
+    ("asi07-a2a", "Insecure Agent-to-Agent Comms"),
 ]
 
 # Neutral, non-spoiling one-liner per level (reviewed once, same for every box).

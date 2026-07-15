@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "ops-orchestrator": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "compose", "-f", "${REPO}/docker-compose.yml", "run", "--rm", "-T",
+        "-v", "${STATE_DIR}:/data",
+        "-v", "${SINK_DIR}:/sink",
+        "-e", "LAB_LEVEL=${LAB_LEVEL}",
+        "-e", "ASI07_BUS=/data/bus.json",
+        "-e", "ASI07_SCORE_LOG=/data/score.log",
+        "-e", "ASI07_SINK=/sink/outbox.log",
+        "orchestrator"
+      ]
+    }
+  }
+}

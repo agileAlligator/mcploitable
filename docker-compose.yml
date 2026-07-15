@@ -50,6 +50,9 @@ services:
   memory:
     <<: *hardening
     entrypoint: ["memo-assistant"]      # ASI06 memory / context poisoning
+  orchestrator:
+    <<: *hardening
+    entrypoint: ["ops-orchestrator"]    # ASI07 insecure agent-to-agent comms
   calc:
     <<: *hardening
     entrypoint: ["calc"]                  # ASI05 unexpected code execution
