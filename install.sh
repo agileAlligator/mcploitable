@@ -21,6 +21,8 @@ SERVERS=(
   "analytics-bi:analytics:analytics-bi"
   "account-recovery:recovery:account-recovery"
   "plugin-hub:toolhub:plugin-hub"
+  "memo-assistant:memory:memo-assistant"
+  "ops-orchestrator:orchestrator:ops-orchestrator"
   "calc:calc:calc"
 )
 

@@ -19,6 +19,6 @@ RUN pip install --no-cache-dir . \
 USER lowpriv
 
 # No default server: each is its own console script (mail-assistant/analytics-bi/
-# account-recovery/plugin-hub/calc). docker-compose.yml sets the entrypoint per
-# service; for a bare run, name one, e.g.:
+# account-recovery/plugin-hub/memo-assistant/ops-orchestrator/calc). docker-compose.yml
+# sets the entrypoint per service; for a bare run, name one, e.g.:
 #   docker run -i --rm mcploitable:latest mail-assistant

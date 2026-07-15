@@ -18,21 +18,35 @@ missing auto-fetch channel.
 Allowlisted hosts (branding CDN, internal chart host, preview proxy) resolve to the
 local collector, standing in for "these domains are attacker-reachable."
 
-## How results were actually produced (read this)
+## Status: not used at runtime by the current CTF box
 
-Do **not** run victims as in-session subagents in this project — they inherit the
-project's red-team memory and are biased toward refusal, which produces unreliable
-RESIST results. The only trustworthy ASI01 measurements run each victim as an
-**isolated `claude -p` process** from a clean project (no memory, neutral paths,
-tools locked to the mail command). See:
+The `asi01-mail` CTF box (`harness/lab/scenarios/asi01-mail/`) does **not**
+invoke this renderer/collector at runtime. Its `oracle.sh` instead imports
+`mail.py`'s own `score_brief()` directly and runs the level-gated
+fetch/allowlist/strip-all simulation in-process — see
+`harness/lab/boxes/asi01-mail/README.md` for why (no live HTTP collector
+needed to keep the same faithful "no send tool" property). This harness
+remains useful for a manual, non-CTF demonstration of `mail-assistant` paired
+with a real auto-fetching client, but it is legacy relative to the CTF box's
+own scoring path.
 
-> **`../trials/sandbox-haiku/results.md`** — the gold-standard sandboxed run
-> (Haiku × renderer: single-shot 10/10 LAND, recon+malicious 10/10 LAND).
-> Driver: `$CLAUDE_JOB_DIR/tmp/run_sandbox_trial*.sh`.
+## How results were actually produced (read this — legacy pointer)
+
+The `../trials/` directory this section used to point to (`sandbox-haiku/`,
+`sandbox-sonnet/`) **no longer exists in this tree** — it was cleaned up as
+scratch scaffolding from an earlier ad-hoc red-team pass. For current,
+validated ASI01 numbers (the 20×-per-level gauntlet, all seven boxes), see
+`docs/RESULTS.md`. The methodology below is still sound for a manual renderer
+run: do **not** run victims as in-session subagents in this project — they
+inherit the project's red-team memory and are biased toward refusal, which
+produces unreliable RESIST results. Run each victim as an **isolated
+`claude -p` process** from a clean project (no memory, neutral paths, tools
+locked to the mail command).
 
 `renderer.py` + `collector.py` + `run_render.py` here are the adjudication
-infrastructure used by those sandboxed runs. `mailclient.py` is the in-project mail
-tool; the sandbox uses a neutrally-named copy so the victim sees no lab tells.
+infrastructure for that kind of manual sandboxed run. `mailclient.py` is a
+neutrally-named standalone copy of the mail tool so a victim sees no lab
+tells; it is separate from the `mail-assistant` server the CTF box uses.
 
 ## Run (adjudication side)
 
