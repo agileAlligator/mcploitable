@@ -8,7 +8,10 @@ license = { text = "MIT" }
 authors = [{ name = "mcploitable contributors" }]
 keywords = ["mcp", "security", "training", "owasp", "agentic", "vulnerable", "ctf"]
 dependencies = [
-    "mcp>=1.10",
+    # >=1.28.1 avoids a fastmcp find_context_parameter bug (issubclass() on a
+    # list[dict] return annotation raises TypeError) present in 1.27.2 and
+    # earlier 1.2x releases.
+    "mcp>=1.28.1",
 ]
 
 [project.optional-dependencies]
@@ -18,13 +21,14 @@ dev = [
 ]
 
 [project.scripts]
-# One standalone server per vulnerability. Each presents as an ordinary tool;
-# the ASI tag in the name records which OWASP ASI class it demonstrates.
-"helpdesk-ASI01" = "mcploitable.servers.helpdesk:main"
-"analytics-ASI02" = "mcploitable.servers.analytics:main"
-"ops-assistant-ASI03" = "mcploitable.servers.ops_assistant:main"
-"toolhub-ASI04" = "mcploitable.servers.toolhub:main"
-"calc-service-ASI05" = "mcploitable.servers.calc_service:main"
+# One standalone server per vulnerability. Each presents as an ordinary,
+# generic-named tool; the OWASP ASI class it demonstrates is documented in
+# docs/operator/SERVERS.md, not in the name.
+"mail-assistant" = "mcploitable.servers.mail:main"
+"analytics-bi" = "mcploitable.servers.analytics:main"
+"account-recovery" = "mcploitable.servers.recovery:main"
+"plugin-hub" = "mcploitable.servers.toolhub:main"
+"calc" = "mcploitable.servers.calc_service:main"
 
 [build-system]
 requires = ["hatchling"]

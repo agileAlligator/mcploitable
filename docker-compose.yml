@@ -1,7 +1,7 @@
 # Isolated run profiles — ONE service per vulnerable server.
 #
 # Each service runs a standalone, ordinary-looking MCP server that harbours a
-# single latent vulnerability (the ASI tag records which class).
+# single latent vulnerability.
 #
 # Containment hardening (shared via the `&hardening` anchor): NO network,
 # read-only root filesystem, dropped Linux capabilities, no privilege escalation.
@@ -10,8 +10,8 @@
 #
 # Usage (stdio MCP server — attach an MCP client to its stdin/stdout):
 #   docker compose build
-#   docker compose run --rm -T helpdesk        # ASI01 — indirect prompt injection
-#   docker compose run --rm -T calc            # ASI05 — code execution
+#   docker compose run --rm -T analytics                  # over-scoped tools / tool misuse
+#   docker compose --profile danger run --rm -T calc      # real code execution — opt-in only
 
 x-hardening: &hardening
   build: .
@@ -24,20 +24,32 @@ x-hardening: &hardening
     - ALL
   security_opt:
     - no-new-privileges:true
+  mem_limit: 512m
+  cpus: "1.0"
+  pids_limit: 256
+  tmpfs:
+    - /tmp:size=16m        # read_only above; small writable scratch space only
 
 services:
-  helpdesk:
+  mail:
     <<: *hardening
-    entrypoint: ["helpdesk-ASI01"]        # ASI01 — indirect prompt injection
+    entrypoint: ["mail-assistant"]        # ASI01 indirect prompt injection
   analytics:
     <<: *hardening
-    entrypoint: ["analytics-ASI02"]       # ASI02 — over-scoped tools
-  ops:
+    entrypoint: ["analytics-bi"]          # ASI02 over-scoped tools / tool misuse
+    environment:
+      ASI02_STORE: /data/asi02_store.json
+    volumes:
+      - ./harness/asi02-store:/data
+  recovery:
     <<: *hardening
-    entrypoint: ["ops-assistant-ASI03"]   # ASI03 — confused-deputy privilege abuse
+    entrypoint: ["account-recovery"]      # ASI03 identity & privilege abuse
   toolhub:
     <<: *hardening
-    entrypoint: ["toolhub-ASI04"]         # ASI04 — agentic supply chain
+    entrypoint: ["plugin-hub"]            # ASI04 agentic supply chain
   calc:
     <<: *hardening
-    entrypoint: ["calc-service-ASI05"]    # ASI05 — unexpected code execution
+    entrypoint: ["calc"]                  # ASI05 unexpected code execution
+    profiles: ["danger"]                  # opt-in only — real code execution (PRODUCTIONIZATION §0.5)
+    volumes:
+      - ./harness/asi05-store:/data       # operator score-log sink (ASI05_SCORE_LOG)

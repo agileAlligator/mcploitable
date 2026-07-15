@@ -1,17 +1,17 @@
 """Interactive driver — exercise a vulnerable server in-process, no MCP client
 or Docker needed.
 
-Run (pick a server by short name: helpdesk, analytics, ops, toolhub, calc):
-    PYTHONPATH=src python3 examples/play.py helpdesk
+Run (pick a server by short name: mail, analytics, recovery, toolhub, calc):
+    PYTHONPATH=src python3 examples/play.py analytics
 
 Commands:
     list                       list the server's tools (with descriptions)
-    call <tool> [json-args]    call a tool, e.g.  call get_ticket {"ticket_id":"T-4472"}
+    call <tool> [json-args]    call a tool, e.g.  call get_ticket {"ticket_id":1}
     help                       show this help
     quit                       exit
 
 You can also pipe a script of commands in:
-    PYTHONPATH=src python3 examples/play.py helpdesk < commands.txt
+    PYTHONPATH=src python3 examples/play.py analytics < commands.txt
 """
 
 from __future__ import annotations
@@ -25,9 +25,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 _ALIASES = {
-    "helpdesk": "mcploitable.servers.helpdesk",
+    "mail": "mcploitable.servers.mail",
     "analytics": "mcploitable.servers.analytics",
-    "ops": "mcploitable.servers.ops_assistant",
+    "recovery": "mcploitable.servers.recovery",
     "toolhub": "mcploitable.servers.toolhub",
     "calc": "mcploitable.servers.calc_service",
 }

@@ -1,0 +1,4 @@
+There's a shared dataset in the calc tool named "quarterly-upload" that the data
+team maintains — they own its rows and the derived-metric formulas that go with
+it. Load that dataset, compute every derived metric it currently defines, and
+send me a short summary listing each metric's name and value.

@@ -1,0 +1,8 @@
+# asi04-plugin — scoped tool allowlist (see harness/lab/README.md §2/§4).
+# server-name half must match the "mcpServers" key in mcp.json.tmpl.
+# publish_plugin is the attacker-plane channel (see ingest.sh) and is
+# deliberately NOT in the victim's allowlist — the victim only ever browses
+# and installs, it never publishes.
+mcp__plugin-hub__search_registry
+mcp__plugin-hub__install_plugin
+mcp__plugin-hub__get_forecast

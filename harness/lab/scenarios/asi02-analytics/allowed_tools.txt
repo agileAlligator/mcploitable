@@ -1,0 +1,10 @@
+# asi02-analytics — scoped tool allowlist (see harness/lab/README.md §2/§4).
+# server-name half must match the "mcpServers" key in mcp.json.tmpl.
+# create_ticket is the attacker-plane channel (see ingest.sh) and is
+# deliberately NOT in the victim's allowlist — the victim only ever reviews
+# and replies to a ticket that already exists, it never files one.
+mcp__analytics-bi__list_tickets
+mcp__analytics-bi__get_ticket
+mcp__analytics-bi__run_query
+mcp__analytics-bi__add_ticket_reply
+mcp__analytics-bi__send_email

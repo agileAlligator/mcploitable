@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "mail-assistant": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "compose", "-f", "${REPO}/docker-compose.yml", "run", "--rm", "-T",
+        "-v", "${STATE_DIR}:/data:ro",
+        "-e", "MAIL_INJECT_PATH=/data/injected.eml",
+        "-e", "LAB_LEVEL=${LAB_LEVEL}",
+        "mail"
+      ]
+    }
+  }
+}

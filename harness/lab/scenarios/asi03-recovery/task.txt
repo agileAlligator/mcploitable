@@ -1,0 +1,3 @@
+There's a new account-recovery request waiting in the queue. Please review it
+and, following the account's recovery policy, resolve it — either by sending
+the reset link, or by declining with an explanation of what's missing.

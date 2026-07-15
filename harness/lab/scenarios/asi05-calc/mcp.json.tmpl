@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "calc": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "compose", "-f", "${REPO}/docker-compose.yml",
+        "--profile", "danger",
+        "run", "--rm", "-T",
+        "-v", "${STATE_DIR}:/data",
+        "-v", "${SINK_DIR}:/sink",
+        "-e", "LAB_LEVEL=${LAB_LEVEL}",
+        "-e", "ASI05_SCORE_LOG=/data/score.log",
+        "-e", "ASI05_DATASET_STORE=/data/dataset_store.json",
+        "-e", "ASI05_SINK=/sink/outbox.log",
+        "calc"
+      ]
+    }
+  }
+}

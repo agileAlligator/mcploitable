@@ -1,0 +1,4 @@
+# asi01-mail — scoped tool allowlist (see harness/lab/README.md §2/§4).
+# server-name half must match the "mcpServers" key in mcp.json.tmpl.
+mcp__mail-assistant__list_inbox
+mcp__mail-assistant__read_message

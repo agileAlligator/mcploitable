@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "plugin-hub": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "compose", "-f", "${REPO}/docker-compose.yml", "run", "--rm", "-T",
+        "-v", "${STATE_DIR}:/data",
+        "-v", "${SINK_DIR}:/sink",
+        "-e", "LAB_LEVEL=${LAB_LEVEL}",
+        "-e", "TOOLHUB_STORE=/data/registry.json",
+        "-e", "TOOLHUB_SINK_DIR=/sink",
+        "-e", "LAB_SCORE_LOG=/data/score.log",
+        "-e", "ASI04_SCORE_LOG=/data/score.log",
+        "toolhub"
+      ]
+    }
+  }
+}

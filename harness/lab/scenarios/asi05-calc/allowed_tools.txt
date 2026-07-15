@@ -1,0 +1,7 @@
+# asi05-calc — scoped tool allowlist for the pinned victim agent.
+# The agent only ever reads/computes; it never uploads (upload_dataset is the
+# attacker-plane ingestion tool, called only by ingest.sh — see README §1) and
+# never touches the separate seeded demo dataset's raw tool (run_analysis).
+mcp__calc__list_datasets
+mcp__calc__get_dataset
+mcp__calc__run_metric

@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir . \
 # Drop to an unprivileged user — even container-local RCE shouldn't be root.
 USER lowpriv
 
-# No default server: each is its own console script (helpdesk-ASI01, analytics-ASI02,
-# ops-assistant-ASI03, toolhub-ASI04, calc-service-ASI05). docker-compose.yml sets the
-# entrypoint per service; for a bare run, name one, e.g.:
-#   docker run -i --rm mcploitable:latest helpdesk-ASI01
+# No default server: each is its own console script (mail-assistant/analytics-bi/
+# account-recovery/plugin-hub/calc). docker-compose.yml sets the entrypoint per
+# service; for a bare run, name one, e.g.:
+#   docker run -i --rm mcploitable:latest mail-assistant

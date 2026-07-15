@@ -17,11 +17,11 @@ COMPOSE="$REPO_DIR/docker-compose.yml"
 
 # registration name : docker-compose service : local console script
 SERVERS=(
-  "helpdesk-ASI01:helpdesk:helpdesk-ASI01"
-  "analytics-ASI02:analytics:analytics-ASI02"
-  "ops-assistant-ASI03:ops:ops-assistant-ASI03"
-  "toolhub-ASI04:toolhub:toolhub-ASI04"
-  "calc-service-ASI05:calc:calc-service-ASI05"
+  "mail-assistant:mail:mail-assistant"
+  "analytics-bi:analytics:analytics-bi"
+  "account-recovery:recovery:account-recovery"
+  "plugin-hub:toolhub:plugin-hub"
+  "calc:calc:calc"
 )
 
 MODE="docker"
