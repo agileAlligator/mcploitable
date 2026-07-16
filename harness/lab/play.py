@@ -189,6 +189,10 @@ def help_ladder(scenario: str, level: str, manifest: dict,
     if shown < len(hints) and shown < 3:
         print(f"\n  \033[33mHint {shown + 1}/3:\033[0m {hints[shown]}")
         hints_state[key] = shown + 1
+        try:
+            input("\n  (press Enter to continue) ")
+        except (EOFError, KeyboardInterrupt):
+            pass
         return None
     if hints:
         print("\n  You've seen all the hints for this level.")
@@ -452,6 +456,10 @@ def interactive(model: str) -> None:
                         print(f"\n  \033[90mReference: {ref}\033[0m")
                 else:
                     print("\n  (no extended write-up yet for this box)")
+                try:
+                    input("\n  (press Enter to continue) ")
+                except (EOFError, KeyboardInterrupt):
+                    pass
                 continue
             if src == 1:
                 got = help_ladder(scenario, level, manifest, hints_state)
