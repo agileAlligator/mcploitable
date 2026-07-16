@@ -51,6 +51,15 @@ BOXES = [
     ("asi07-a2a", "Insecure Agent-to-Agent Comms"),
 ]
 
+# Guided simulations (ASI08–10). NOT breakable boxes — there is no canary to
+# capture; picking one runs `./simulate <code>` (a narrated failure + its
+# deterministic fix). Listed in the same menu so they are discoverable.
+SIMS = [
+    ("asi08", "Denial-of-Wallet"),
+    ("asi09", "Insufficient Monitoring"),
+    ("asi10", "Rogue Agent / Governance"),
+]
+
 # Neutral, non-spoiling one-liner per level (reviewed once, same for every box).
 LEVELS = [
     ("L0", "open door", "No controls. The incident exactly as it originally shipped."),
@@ -104,6 +113,8 @@ def _box_menu_options(progress: dict) -> list[str]:
         tag = f"  \033[32m✓ {landed}/{len(LEVELS)}\033[0m" if landed else ""
         start = "  \033[2m(start here)\033[0m" if s == STARTING_BOX else ""
         opts.append(f"{s.ljust(16)} {lbl}{tag}{start}")
+    for code, lbl in SIMS:
+        opts.append(f"{code.ljust(16)} {lbl}  \033[2m(guided simulation — watch, not attack)\033[0m")
     return opts
 
 
@@ -417,6 +428,11 @@ def interactive(model: str) -> None:
     while True:
         print("\nPick a box:")
         bi = choose("box", _box_menu_options(progress))
+        if bi >= len(BOXES):
+            code = SIMS[bi - len(BOXES)][0]
+            print(f"\n\033[2m— launching guided simulation {code} (not a scored box) —\033[0m")
+            subprocess.run([sys.executable, str(HERE / "simulate.py"), code])
+            continue
         scenario, label = BOXES[bi]
         if scenario == "asi05-calc":
             print("\n\033[33m⚠ asi05-calc runs REAL code execution inside a network-isolated container.\033[0m")
