@@ -49,6 +49,7 @@ tells; it is separate from the `mail-assistant` server the CTF box uses.
 
 ```bash
 cd harness/echoleak
+mkdir -p runs
 python3 collector.py --port 8899 --log runs/collector.log &
 python3 run_render.py <path-to-agent-brief.md> --log runs/collector.log
 ```
