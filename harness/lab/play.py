@@ -66,6 +66,55 @@ LEVEL_BY_ID = {lid: (label, desc) for lid, label, desc in LEVELS}
 
 RESULT_RE = re.compile(r"result=([A-Za-z-]+)")
 
+STARTING_BOX = "asi01-mail"  # suggested first stop, annotated in the box menu
+
+
+# ─────────────────────────── progress (A3) ───────────────────────────
+PROGRESS_FILE = HERE / "state" / ".progress.json"
+INTRO_SENTINEL = HERE / "state" / ".play-intro-shown"
+
+
+def load_progress() -> dict:
+    """{scenario: {level: True}} for every (box, level) landed so far. Best-effort;
+    never raises — a missing/corrupt file just means an empty progress record."""
+    try:
+        return json.loads(PROGRESS_FILE.read_text())
+    except (OSError, json.JSONDecodeError, ValueError):
+        return {}
+
+
+def save_progress(progress: dict) -> None:
+    try:
+        PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        PROGRESS_FILE.write_text(json.dumps(progress, indent=2))
+    except OSError:
+        pass  # progress tracking is a nicety, never fatal
+
+
+def mark_landed(progress: dict, scenario: str, level: str) -> None:
+    progress.setdefault(scenario, {})[level] = True
+    save_progress(progress)
+
+
+def _box_menu_options(progress: dict) -> list[str]:
+    opts = []
+    for s, lbl in BOXES:
+        marks = progress.get(s, {})
+        landed = sum(1 for v in marks.values() if v)
+        tag = f"  \033[32m✓ {landed}/{len(LEVELS)}\033[0m" if landed else ""
+        start = "  \033[2m(start here)\033[0m" if s == STARTING_BOX else ""
+        opts.append(f"{s.ljust(16)} {lbl}{tag}{start}")
+    return opts
+
+
+def _level_menu_options(progress: dict, scenario: str) -> list[str]:
+    marks = progress.get(scenario, {})
+    opts = []
+    for lid, lbl, desc in LEVELS:
+        tag = "  \033[32m✓ landed\033[0m" if marks.get(lid) else ""
+        opts.append(f"{lid} · {lbl} — {desc}{tag}")
+    return opts
+
 
 # ─────────────────────────── manifest + assembly ───────────────────────────
 def load_manifest(scenario: str) -> dict:
@@ -121,6 +170,35 @@ def solution_artifact(scenario: str, level: str) -> Path:
     if scenario == "asi05-calc":
         return base / f"{lvl}_artifact.json"
     return base / f"{lvl}.json"
+
+
+# ─────────────────────────── help ladder (A2 / B1) ───────────────────────────
+def help_ladder(scenario: str, level: str, manifest: dict,
+                 hints_state: dict) -> tuple[str, str] | None:
+    """Reveal the NEXT rung of the escalating help ladder for this (box, level):
+    hint[0] -> hint[1] -> hint[2] -> (only then) offer the reference solution.
+    Call this again to advance one more rung; state lives in `hints_state`
+    (keyed per box/level, owned by the caller so it resets per box/level visit).
+    Returns (artifact_text, suffix) only if the student accepts the revealed
+    reference solution as their payload; otherwise None (purely informational).
+    Degrades gracefully if the manifest has no/short `hints`: falls straight
+    through to the solution offer, same as the original one-shot reveal."""
+    key = (scenario, level)
+    shown = hints_state.get(key, 0)
+    hints = manifest.get("hints") or []
+    if shown < len(hints) and shown < 3:
+        print(f"\n  \033[33mHint {shown + 1}/3:\033[0m {hints[shown]}")
+        hints_state[key] = shown + 1
+        return None
+    if hints:
+        print("\n  You've seen all the hints for this level.")
+    if input("  Reveal the reference solution for this level? [y/N] ").strip().lower() != "y":
+        return None
+    sol = solution_artifact(scenario, level)
+    if not sol.exists():
+        print(f"  (no reference solution file at {sol})")
+        return None
+    return sol.read_text(), sol.suffix
 
 
 # ─────────────────────────── running one round ───────────────────────────
@@ -270,6 +348,9 @@ def show_briefing(scenario: str, label: str, manifest: dict, level: str, advance
         else:
             tag = ""
         print(f"   • {f['label']}{tag}")
+        what = f.get("what")
+        if what:
+            print(f"       \033[2;90m{what}\033[0m")
     print(f"\033[1m{bar}\033[0m")
 
 
@@ -298,6 +379,22 @@ def preflight() -> None:
         sentinel.write_text("ok\n")
 
 
+# ─────────────────────────── first-run orientation (A4) ───────────────────────────
+def _maybe_show_orientation() -> None:
+    if INTRO_SENTINEL.exists():
+        return
+    print("\n\033[1mHow this works:\033[0m")
+    print("  Pick a box, then read the real incident behind it.")
+    print("  Fill in the attacker levers to shape your artifact (help ladder if you're stuck).")
+    print("  Watch the agent run live against a clean victim.")
+    print("  See whether your canary reached the sink — L0 is wide open, L3 is the wall.")
+    try:
+        INTRO_SENTINEL.parent.mkdir(parents=True, exist_ok=True)
+        INTRO_SENTINEL.write_text("shown\n")
+    except OSError:
+        pass
+
+
 # ─────────────────────────── interactive loop ───────────────────────────
 def choose(prompt: str, options: list[str]) -> int:
     for i, o in enumerate(options, 1):
@@ -310,20 +407,23 @@ def choose(prompt: str, options: list[str]) -> int:
 
 def interactive(model: str) -> None:
     preflight()
+    progress = load_progress()
+    _maybe_show_orientation()
     print("\n\033[1mmcploitable\033[0m — interactive attacker lab. Ctrl-C to quit.")
     while True:
         print("\nPick a box:")
-        bi = choose("box", [f"{s.ljust(16)} {lbl}" for s, lbl in BOXES])
+        bi = choose("box", _box_menu_options(progress))
         scenario, label = BOXES[bi]
         if scenario == "asi05-calc":
             print("\n\033[33m⚠ asi05-calc runs REAL code execution inside a network-isolated container.\033[0m")
             if input("  type 'yes' to enable it: ").strip().lower() != "yes":
                 continue
         print("\nPick a level:")
-        li = choose("level", [f"{lid} · {lbl} — {desc}" for lid, lbl, desc in LEVELS])
+        li = choose("level", _level_menu_options(progress, scenario))
         level = LEVELS[li][0]
         manifest = load_manifest(scenario)
         advanced = False
+        hints_state: dict[tuple[str, str], int] = {}
 
         prev_values: dict | None = None
         while True:
@@ -331,25 +431,33 @@ def interactive(model: str) -> None:
             print("\nPayload:")
             src = choose("payload", [
                 "Write your own",
-                "Use the reference solution (reveals the intended answer)",
+                "Get help (hints, then the reference solution)",
+                "Read the full story of the real incident",
                 "Toggle advanced mode (edit templated fields)",
                 "Back to box/level menu",
             ])
-            if src == 3:
+            if src == 4:
                 break
-            if src == 2:
+            if src == 3:
                 advanced = not advanced
                 print(f"  advanced mode {'ON' if advanced else 'OFF'}")
                 continue
+            if src == 2:
+                story = manifest.get("story")
+                if story:
+                    print("\n\033[1m— the full story —\033[0m")
+                    print(f"  {story}")
+                    ref = manifest.get("reference")
+                    if ref:
+                        print(f"\n  \033[90mReference: {ref}\033[0m")
+                else:
+                    print("\n  (no extended write-up yet for this box)")
+                continue
             if src == 1:
-                if input("  This reveals the intended answer for this level. Continue? [y/N] ").strip().lower() != "y":
+                got = help_ladder(scenario, level, manifest, hints_state)
+                if got is None:
                     continue
-                sol = solution_artifact(scenario, level)
-                if not sol.exists():
-                    print(f"  (no reference solution file at {sol})")
-                    continue
-                artifact_text = sol.read_text()
-                suffix = sol.suffix
+                artifact_text, suffix = got
             else:
                 values = prompt_fields(manifest, advanced)
                 prev_values = values
@@ -360,7 +468,12 @@ def interactive(model: str) -> None:
             if input("\nsubmit this? [Y/n] ").strip().lower() in ("n", "no"):
                 continue
             runs = [run_round(scenario, level, artifact_text, suffix, model, live=True)]
-            _show_verdict(runs[0], level)
+            _show_verdict(runs[0], level, scenario)
+            if runs[-1] == "LANDED":
+                mark_landed(progress, scenario, level)
+            elif runs[-1] == "not-yet" and level != "L3":
+                if input("\n  want a hint? [y/N] ").strip().lower() in ("y", "yes"):
+                    help_ladder(scenario, level, manifest, hints_state)
             # Opt-in retry (up to 3 total) on a miss — L0/L1/L2 only, never L3
             # (a wall has nothing to retry against). Always show the honest
             # tally; a land is declared, not laundered into a bare "WIN".
@@ -370,30 +483,75 @@ def interactive(model: str) -> None:
                 if input(f"\n  retry the same payload? ({note}) [y/N] ").strip().lower() not in ("y", "yes"):
                     break
                 runs.append(run_round(scenario, level, artifact_text, suffix, model, live=True))
-                _show_verdict(runs[-1], level)
+                _show_verdict(runs[-1], level, scenario)
+                if runs[-1] == "LANDED":
+                    mark_landed(progress, scenario, level)
+                elif runs[-1] == "not-yet" and len(runs) < 3:
+                    if input("\n  want another hint? [y/N] ").strip().lower() in ("y", "yes"):
+                        help_ladder(scenario, level, manifest, hints_state)
             if len(runs) > 1:
                 landed = runs.count("LANDED")
                 print(f"\n  ⇒ landed {landed}/{len(runs)} run(s).")
                 if level == "L1":
                     print("    (L1 is probabilistic by design — contrast L3, which never falls.)")
+            if level == "L3":
+                lesson = manifest.get("l3_lesson")
+                if lesson:
+                    print(f"\n  \033[36mWhy this holds:\033[0m {lesson}")
             if input("\ntry again on this box/level with a new payload? [Y/n] ").strip().lower() in ("n", "no"):
                 break
 
 
-def _show_verdict(verdict: str, level: str) -> None:
+def show_capture(scenario: str) -> None:
+    """On a land, show the student the attacker-observable sink — the RAW content
+    that actually egressed (the leaked reply, the mailbox message, the auto-fetch
+    collector URL, the outbox line, the poisoned registry). Scoring stays
+    method-silent; the sink is the student's own ground truth of what left the
+    trust boundary. `.log` effect files are shown first, then any other capture."""
+    sink_dir = HERE / "sinks" / scenario
+    if not sink_dir.is_dir():
+        return
+    files = sorted((p for p in sink_dir.glob("*") if p.is_file()),
+                   key=lambda p: (p.suffix != ".log", p.name))
+    shown = False
+    for f in files:
+        try:
+            content = f.read_text(errors="replace").strip()
+        except OSError:
+            continue
+        if not content:
+            continue
+        if not shown:
+            print("\n  \033[32m— what leaked (your attacker sink) —\033[0m")
+            shown = True
+        snippet = "\n".join(content.splitlines()[-12:])[:900]
+        print(f"  \033[90m{f.name}:\033[0m")
+        for ln in snippet.splitlines():
+            print(f"    {ln[:200]}")
+    if shown:
+        print(f"  \033[90m(full sink: harness/lab/sinks/{scenario}/)\033[0m")
+
+
+def _show_verdict(verdict: str, level: str, scenario: str | None = None) -> None:
     print()
     if verdict == "LANDED":
         print("\033[32m╔════════════════════════════════════╗")
         print("║  LANDED — you captured the canary. ║")
         print("╚════════════════════════════════════╝\033[0m")
+        if scenario:
+            show_capture(scenario)
+        print("  \033[90myour canary reached the sink — scored server-side by effect.\033[0m")
     elif verdict == "wall":
         print("\033[34m╔══════════════════════════════════════════════╗")
         print("║  WALL — the deterministic control held (L3).  ║")
         print("╚══════════════════════════════════════════════╝\033[0m")
     elif verdict == "not-yet":
         print("\033[33m— not yet. The attack didn't land this run. Iterate. —\033[0m")
+        print("  \033[90mthe agent saw your artifact but didn't act — is the ask buried, "
+              "or does it read as suspicious?\033[0m")
     else:
-        print(f"\033[31m— run error (verdict={verdict}); see harness/lab/state/ for details —\033[0m")
+        log_path = f"harness/lab/state/{scenario}/runner.log" if scenario else "harness/lab/state/<box>/runner.log"
+        print(f"\033[31m— run error (verdict={verdict}) — check {log_path} for details —\033[0m")
 
 
 # ─────────────────────────── selftest ───────────────────────────
@@ -451,10 +609,33 @@ def selftest(model: str) -> int:
     return 0 if ok else 1
 
 
+USAGE = """\
+mcploitable — interactive attacker lab
+
+Usage:
+  ./play                    interactive mode
+  ./play --model NAME       victim model to use (default: env LAB_MODEL, else 'haiku')
+  ./play --selftest         run every box x level once, non-interactively (plumbing check)
+  ./play --help             show this help and exit
+
+Interactive mode: pick a box -> read the incident -> pick a level -> fill in
+the attacker levers -> watch the agent run live -> see what your canary
+captured. L0 -> L3 gets progressively harder; L3 is the deterministic control
+that's designed to hold.
+"""
+
+
+def print_help() -> None:
+    print(USAGE)
+
+
 # ─────────────────────────── entry ───────────────────────────
 def main() -> int:
-    model = os.environ.get("LAB_MODEL", "haiku")
     args = sys.argv[1:]
+    if "--help" in args or "-h" in args:
+        print_help()
+        return 0
+    model = os.environ.get("LAB_MODEL", "haiku")
     if "--model" in args:
         model = args[args.index("--model") + 1]
     if "--selftest" in args:

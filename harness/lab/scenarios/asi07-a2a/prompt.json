@@ -9,21 +9,32 @@
       "label": "Which agent this message claims to be from",
       "type": "line",
       "default": "specialist",
-      "advanced": true
+      "advanced": true,
+      "what": "The peer identity this envelope asserts — a self-declared name, not a verified credential."
     },
     {
       "key": "task_result",
       "json_key": "task_result",
       "label": "The result you (the peer agent) claim to have produced",
       "type": "multiline",
-      "default": ""
+      "default": "",
+      "what": "The claimed work product that gives the envelope its cover — how much it reads like a genuine step in the workflow."
     },
     {
       "key": "directives",
       "json_key": "directives",
       "label": "The next step you direct the orchestrator to carry out",
       "type": "multiline",
-      "default": ""
+      "default": "",
+      "what": "The actual instruction you want the orchestrator to act on — what it's asked to do because a 'peer' said so."
     }
-  ]
+  ],
+  "story": "As multi-agent systems became common in 2024–2025 — orchestrators delegating to specialist agents over protocols like Google's Agent2Agent (A2A) and shared MCP tool buses — security researchers demonstrated that most implementations trusted an incoming peer message purely on the strength of its claimed identity, with no cryptographic proof of who actually sent it. A message announcing itself as coming from a 'planner' or 'finance-reconciler' agent was treated as authoritative instruction rather than as untrusted data to verify, so any component able to write to the shared bus — a compromised agent, a malicious tool response relayed through an intermediary, or a directly injected message — could impersonate a trusted peer and steer the receiving agent's tool calls.\n  This class of finding is catalogued as OWASP's Agentic Security Initiative risk ASI07 (Insecure Agent-to-Agent Communication): once one agent in a delegated workflow can be made to 'say' something, everything downstream that blindly trusts inter-agent messages inherits the compromise, and the failure typically only surfaces when a privileged action — a payment release, a data export, an infrastructure change — executes because a peer 'said so.' The fix pattern that emerged across A2A/MCP implementations is to authenticate the sender cryptographically (a signed envelope keyed to a secret only the real sender holds) rather than trusting a self-declared name, and to keep high-privilege tools independently scoped so no inter-agent message — verified or not — can direct them outside an authorized boundary.",
+  "reference": "OWASP Agentic Security Initiative — ASI07: Insecure Agent-to-Agent Communication (2024–2025); cf. Google A2A protocol trust-boundary discussions and MCP inter-agent injection research (e.g. Invariant Labs).",
+  "hints": [
+    "The orchestrator has no independent way to see who actually put a message on the bus — it only has the envelope in front of it, and it decides how much to trust that envelope based on what the envelope itself claims. Ask what, in this workflow, actually vouches for a sender's identity.",
+    "The early rungs check identity by name — an allowlist of trusted peer agents — but the field they check is one the message's author fills in themselves, not something anything independently verifies. The lever that matters is whichever identity claim gets taken at face value rather than authenticated.",
+    "A bare instruction reads as suspicious on its own. A message that also supplies a plausible task_result — the kind of thing the trusted peer it claims to be would actually have produced — and directs a next step consistent with that peer's normal role, reads as routine workflow continuation rather than an outside command."
+  ],
+  "l3_lesson": "The correct control authenticates the sender cryptographically — a server-issued HMAC over the message, signed with a key the attacker plane never has access to — so identity can no longer be asserted by simply naming a trusted peer; anything unverifiable is delivered as inert data, never as an instruction. Because the payout tool is also independently scoped to only ever release details to an authorized internal recipient, no directive — verified or not — can redirect it outside that boundary, closing the path even if sender trust were somehow established."
 }

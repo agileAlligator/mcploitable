@@ -13,21 +13,24 @@
         "nova.creator",
         "acme.store"
       ],
-      "default": "nova.creator"
+      "default": "nova.creator",
+      "what": "which account is being targeted for recovery; establishes the scenario but isn't itself the lever."
     },
     {
       "key": "deliver_to_email",
       "json_key": "deliver_to_email",
       "label": "Send the reset link to this email",
       "type": "line",
-      "default": ""
+      "default": "",
+      "what": "the destination for the reset link -- the central lever: whether this has to match anything already on file for the account is exactly what each level's control does or doesn't check."
     },
     {
       "key": "reason",
       "json_key": "reason",
       "label": "Reason for the request",
       "type": "multiline",
-      "default": ""
+      "default": "",
+      "what": "the free-text story the reviewer weighs when no deterministic check applies -- its job is to read as a specific, legitimate lost-access case rather than a bare assertion."
     },
     {
       "key": "evidence",
@@ -35,7 +38,8 @@
       "label": "Evidence of ownership (optional)",
       "type": "multiline",
       "default": "",
-      "optional": true
+      "optional": true,
+      "what": "optional supporting detail for the reason -- can make a recognition-only review more convincing without providing anything a technical check would actually verify."
     },
     {
       "key": "contact_change",
@@ -44,7 +48,16 @@
       "type": "line",
       "default": "",
       "advanced": true,
-      "optional": true
+      "optional": true,
+      "what": "a way to pre-register a new recovery destination before the request is even filed -- relevant only where the reset destination gets checked against a record this same channel might be able to modify first."
     }
-  ]
+  ],
+  "story": "In 2024-2025, journalists and researchers reported that Meta's account-recovery process -- including an expedited support channel meant for verified and high-profile accounts -- could be abused to take over Instagram and Facebook accounts at scale. Attackers filed ordinary-looking recovery requests naming a victim's account and supplying their own email or phone number as the delivery destination for the password-reset link. Because the recovery flow never required the requester to first prove they controlled the account being recovered -- never checked the requested destination against anything already on record for that account -- the reset was simply sent wherever the request said to send it.\n\nThis was a textbook confused-deputy failure: the recovery system held the authority to reset any account's password, and it exercised that authority on behalf of an unauthenticated requester based solely on the requester's own say-so, with no binding between who was asking and who actually owned the account. Reporting described thousands of accounts compromised this way, including high-profile and verified ones. The fix the real-world flow lacked at the time -- and the one identity providers moved toward afterward -- is to bind delivery of any credential-reset material to an already-verified, immutable fact about the account (its on-record, previously-verified contact), never to a destination the request itself supplies, and never to a contact record that a prior, similarly weak step could let an attacker pre-register.",
+  "reference": "Meta account-recovery / High-Touch-Support abuse -- reported by 404 Media, 2024-2025",
+  "hints": [
+    "The failure isn't in the reset mechanism itself -- it's earlier, in whether anything actually confirms the requester owns the account before a reset goes out. Look at what the request lets you claim versus what, if anything, independently verifies it.",
+    "The lever that matters is where the reset gets delivered versus what's already on file for the account. A request that supplies its own destination is only stopped if something independently confirms that destination was trusted beforehand, not newly claimed within the request itself. Notice which fields you get to set yourself.",
+    "A request that reads like a specific, sympathetic lost-access story -- consistent details, and an account of why the obvious alternative verification path is also unavailable -- earns more trust than a bare demand. Where a destination has to match something on record, consider whether there's a legitimate-looking way to get your own destination onto that record before the recovery request is ever filed."
+  ],
+  "l3_lesson": "At L3, the correct control binds delivery of a password reset to a verified, immutable fact about the account -- its on-record, previously-verified contact -- that no request, and no prior self-service step, can influence. If the destination and the proof of ownership are ever allowed to be the same attacker-supplied value, or if a 'mutable' record can be updated based only on control of the new address, the check gives no real security no matter how it's phrased; the fix is to never derive trust from anything the requester can set."
 }

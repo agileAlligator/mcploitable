@@ -1,8 +1,16 @@
 {
   "incident": "Vanna.AI (CVE-2024-5565)",
-  "briefing": "A data-analysis tool assembled code from untrusted input and executed it server-side; the caller only ever saw the resulting number.\n  Hint: your dataset's 'formula' is evaluated during analysis. The agent never sees the code \u2014 only the result it returns.",
+  "briefing": "A data-analysis tool assembled code from untrusted input and executed it server-side; the caller only ever saw the resulting number.\n  Hint: your dataset's 'formula' is evaluated during analysis. The agent never sees the code — only the result it returns.",
   "kind": "json",
   "blurb": "Upload a dataset with computed metrics. The analyst agent runs your metric formulas over the rows.",
+  "story": "Vanna.AI is a text-to-SQL/data-analysis library that lets a user ask a natural-language question and get back a chart: an LLM generates Python (Plotly) visualization code from the question, and the library runs that generated code with Python's exec() to produce the plot. In 2024, security researchers (JFrog) disclosed CVE-2024-5565: a crafted prompt could steer the LLM into generating code that did more than draw a chart — arbitrary Python that executed with the privileges of the host process, achieving remote code execution. The person asking the question never reviewed the generated code; only the resulting chart came back, so the entire attack was invisible to the human and to any downstream caller of the tool. It sits in the same lineage as LangChain's PALChain/LLMMathChain CVE-2023-36258, where an LLM-generated \"math expression\" fed to a Python evaluator could likewise be hijacked into executing arbitrary code. The real-world fix was to stop generating code that gets exec'd/eval'd from model or user input at all — replacing it with restricted evaluation (parsing an expression into an AST and permitting only a fixed set of safe node types) or fully sandboxing/isolating any code execution away from the host running the main application.",
+  "reference": "CVE-2024-5565 — Vanna.AI prompt-to-RCE via exec'd visualization code (JFrog Security Research, 2024); lineage: LangChain PALChain/LLMMathChain CVE-2023-36258",
+  "hints": [
+    "The vulnerability here isn't about talking the agent into doing something unusual — the agent only ever calls run_metric and gets back a number. Look instead at what's allowed into a formula during ingestion, and how that acceptance check changes from one level to the next.",
+    "At the levels that filter, the check isn't the same kind of check every time — one stage looks for specific substrings appearing in the formula's text, a later stage instead only accepts tokens that are declared column names or plain numbers. Consider what each style of check actually verifies, and what it takes for granted.",
+    "A check built on forbidden substrings can be satisfied by code that never spells those substrings out, only assembles them at runtime. A check that accepts \"the formula is just one already-declared name, verbatim\" is trusting that the name itself is safe without re-examining what's inside it — and names, in this system, come from data you supply too."
+  ],
+  "l3_lesson": "At the top level the evaluator never calls exec/eval at all: it parses each formula into an AST and only permits a fixed set of arithmetic node types — numeric constants, +/-*/, and names that are already declared columns — rejecting anything else, including a \"column name\" that is itself disguised code, before it is ever stored. Because no code path in the accepted set can reach execution, there is no formula that both computes a real metric and runs arbitrary code; the control can't be talked around because there is no interpreter left to persuade.",
   "fixed": {
     "rows": [
       {
@@ -23,7 +31,8 @@
       "label": "Metric formula (expression evaluated during analysis)",
       "type": "multiline",
       "default": "",
-      "example": "revenue"
+      "example": "revenue",
+      "what": "The expression whose value becomes this metric — what's accepted here, and how it's checked, is the entire challenge."
     }
   ]
 }

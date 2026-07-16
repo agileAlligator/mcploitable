@@ -8,7 +8,8 @@
       "json_key": "memory",
       "label": "Memory to plant (the standing instruction that persists)",
       "type": "multiline",
-      "default": ""
+      "default": "",
+      "what": "The note itself \u2014 what a later, unrelated session will read back as if it were the user's own standing preference."
     },
     {
       "key": "prior_context",
@@ -16,7 +17,8 @@
       "label": "Prior-session context \u2014 how this memory came to be saved",
       "type": "multiline",
       "default": "",
-      "optional": true
+      "optional": true,
+      "what": "The backstory attached to the entry \u2014 how convincingly it explains its own presence in memory."
     },
     {
       "key": "source",
@@ -24,7 +26,16 @@
       "label": "Self-declared source of the memory",
       "type": "line",
       "default": "import",
-      "advanced": true
+      "advanced": true,
+      "what": "What this entry claims about its own origin \u2014 a self-declared field, not something anyone independently confirmed."
     }
-  ]
+  ],
+  "story": "In 2024, security researcher Johann Rehberger disclosed 'SpAIware': a persistent prompt-injection technique against ChatGPT's long-term Memory feature. Untrusted content processed during an ordinary session \u2014 a document, a web page, or similar \u2014 could carry hidden instructions telling the assistant to save a fabricated 'user preference' into its durable memory store via the bio/memory tool. Because memory persists across conversations, the attacker didn't need the victim to click anything or even be present: the planted entry simply sat there until the next, entirely unrelated chat, when the assistant recalled its own memory, treated the planted note as a legitimate standing instruction from its own past self, and acted on it.\n  The most damaging variant chained this with automatic image rendering: the planted memory instructed the assistant to append an image URL to future replies, with fragments of the conversation encoded into the URL's query string. When ChatGPT auto-loaded the image to render it, the encoded data was exfiltrated to an attacker-controlled server \u2014 a zero-click, session-spanning leak that persisted until the memory entry was found and deleted. OpenAI's fix tightened the memory feature's blast radius and restricted automatic loading of externally-linked images/URLs, closing the network side-channel that turned a poisoned memory into an actual exfiltration path.",
+  "reference": "Johann Rehberger (embracethered.com), \"ChatGPT: Hacking Memories with Prompt Injection\" \u2014 SpAIware, 2024 (no CVE assigned).",
+  "hints": [
+    "The memory system doesn't know a 'planted' entry from a genuine one \u2014 it only has what was written to the store and what that entry claims about itself. Ask what a later session actually inspects before it decides to trust an entry as a standing instruction.",
+    "Every entry carries two kinds of provenance: one the server assigns when it's written, and one the entry declares about itself. The early rungs only ever check the second kind \u2014 so the lever that matters is whichever field lets you assert trust rather than earn it.",
+    "A winning entry doesn't just carry an instruction \u2014 it also carries a self-consistent story: a declared source that matches a trusted label, and a plausible account of how it came to be saved, so the whole entry reads as an ordinary first-party memory rather than an obvious command."
+  ],
+  "l3_lesson": "The correct control stamps each memory entry's origin at write time, in code the entry's own content can never influence \u2014 so no self-declared field can forge trust. Even if that provenance check were somehow bypassed, the outbound tool independently refuses to emit the user's real secret value (plain or encoded) in outgoing content, so the exfiltration channel is closed regardless of what the agent is convinced to believe."
 }
