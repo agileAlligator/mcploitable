@@ -1,7 +1,7 @@
 """Interactive driver — exercise a vulnerable server in-process, no MCP client
 or Docker needed.
 
-Run (pick a server by short name: mail, analytics, recovery, toolhub, calc):
+Run (pick a server by short name: mail, analytics, recovery, toolhub, calc, memory, orchestrator):
     PYTHONPATH=src python3 examples/play.py analytics
 
 Commands:
@@ -30,6 +30,8 @@ _ALIASES = {
     "recovery": "mcploitable.servers.recovery",
     "toolhub": "mcploitable.servers.toolhub",
     "calc": "mcploitable.servers.calc_service",
+    "memory": "mcploitable.servers.memory",
+    "orchestrator": "mcploitable.servers.orchestrator",
 }
 
 HELP = __doc__.split("Commands:", 1)[1]

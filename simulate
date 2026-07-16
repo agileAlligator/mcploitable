@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-# mcploitable — guided simulations (ASI08-10). Wraps harness/lab/simulate.py.
-set -euo pipefail
-cd "$(dirname "$0")"
-exec python3 harness/lab/simulate.py "$@"

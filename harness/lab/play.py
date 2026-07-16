@@ -16,6 +16,10 @@ prompt for (everything structural is templated). The manifest is student-facing
 and must stay neutral (form, never the answer), same discipline as tool
 docstrings.
 
+It also hosts the three guided simulations (ASI08–10) — narrated, deterministic
+demonstrations rather than scored boxes — reached from the same box menu (see
+`sim_asi08`/`sim_asi09`/`sim_asi10`, formerly the separate `./simulate`).
+
 Usage:
     ./play                 # interactive
     python3 harness/lab/play.py            # same
@@ -52,12 +56,13 @@ BOXES = [
 ]
 
 # Guided simulations (ASI08–10). NOT breakable boxes — there is no canary to
-# capture; picking one runs `./simulate <code>` (a narrated failure + its
-# deterministic fix). Listed in the same menu so they are discoverable.
+# capture; picking one runs a narrated failure + its deterministic fix, in
+# process (sim_asi08/09/10 below). Listed in the same menu so they are
+# discoverable.
 SIMS = [
-    ("asi08", "Denial-of-Wallet"),
-    ("asi09", "Insufficient Monitoring"),
-    ("asi10", "Rogue Agent / Governance"),
+    ("asi08", "Cascading Failures"),
+    ("asi09", "Human-Agent Trust Exploitation"),
+    ("asi10", "Rogue Agents"),
 ]
 
 # Neutral, non-spoiling one-liner per level (reviewed once, same for every box).
@@ -147,6 +152,11 @@ def _convert(field: dict, raw: str):
         return [s.strip() for s in raw.split(",") if s.strip()]
     if t == "bool":
         return str(raw).strip().lower() in ("1", "true", "yes", "y")
+    if t == "json":
+        try:
+            return json.loads(raw)
+        except (ValueError, TypeError):
+            return raw  # prompt_fields validates first; a bad default falls through as text
     return raw
 
 
@@ -331,6 +341,18 @@ def prompt_fields(manifest: dict, advanced: bool) -> dict:
         if t == "multiline":
             v = _read_multiline(label + (f"  [default kept if you finish empty]" if default else ""))
             values[f["key"]] = v if v.strip() else default
+        elif t == "json":
+            while True:
+                v = _read_multiline(label + "  [JSON; finish empty to keep default]")
+                if not v.strip():
+                    values[f["key"]] = default
+                    break
+                try:
+                    json.loads(v)
+                    values[f["key"]] = v
+                    break
+                except ValueError as e:
+                    print(f"  \033[31minvalid JSON:\033[0m {e} — try again")
         elif t == "choice":
             choices = f["choices"]
             print(f"\n{label}:")
@@ -431,7 +453,7 @@ def interactive(model: str) -> None:
         if bi >= len(BOXES):
             code = SIMS[bi - len(BOXES)][0]
             print(f"\n\033[2m— launching guided simulation {code} (not a scored box) —\033[0m")
-            subprocess.run([sys.executable, str(HERE / "simulate.py"), code])
+            run_simulation(code)
             continue
         scenario, label = BOXES[bi]
         if scenario == "asi05-calc":
@@ -566,9 +588,10 @@ def _show_verdict(verdict: str, level: str, scenario: str | None = None) -> None
             show_capture(scenario)
         print("  \033[90myour canary reached the sink — scored server-side by effect.\033[0m")
     elif verdict == "wall" or (verdict == "not-yet" and level == "L3"):
-        # A held L3 comes back as not-yet (the scorer measures every level the
-        # same way and never emits a constant "wall"); at L3 that IS the wall
-        # holding, so show it as such rather than "iterate".
+        # A held L3 comes back as `wall` from the scorer: the same live effect
+        # check runs at L3, and a not-landed result there is labeled `wall` (a
+        # genuine land would report LANDED). The `not-yet` arm is a defensive
+        # fallback for any caller that hasn't adopted the wall label.
         print("\033[34m╔══════════════════════════════════════════════╗")
         print("║  WALL — the deterministic control held (L3).  ║")
         print("╚══════════════════════════════════════════════╝\033[0m")
@@ -579,6 +602,190 @@ def _show_verdict(verdict: str, level: str, scenario: str | None = None) -> None
     else:
         log_path = f"harness/lab/state/{scenario}/runner.log" if scenario else "harness/lab/state/<box>/runner.log"
         print(f"\033[31m— run error (verdict={verdict}) — check {log_path} for details —\033[0m")
+
+
+# ─────────────────────────── guided simulations (ASI08–10) ───────────────────────────
+# Narrated, deterministic demonstrations of the three OWASP Agentic classes that
+# are NOT breakable boxes (no canary to capture). Each shows a real, measured
+# metric with the control OFF, asks what stops it, then toggles the fix ON and
+# re-runs so the same metric visibly changes. Reached from the ./play box menu
+# (run_simulation, below); formerly the separate ./simulate entry point.
+_SIM_AUTO = False  # selftest: don't block on input
+
+SIM_BAR = "─" * 68
+
+
+def _sim_ask(prompt: str) -> str:
+    if _SIM_AUTO:
+        print(prompt + " [auto]")
+        return ""
+    try:
+        return input(prompt)
+    except (EOFError, KeyboardInterrupt):
+        return ""
+
+
+def _sim_header(code: str, title: str, incident: str) -> None:
+    print(f"\n\033[1m{SIM_BAR}\033[0m")
+    print(f"\033[1m {code} · {title}   (guided simulation — not a scored box)\033[0m")
+    print(f"\033[1m{SIM_BAR}\033[0m")
+    print(f" Real-world anchor: {incident}\n")
+
+
+def _sim_checkpoint(question: str, answer: str) -> None:
+    print(f"\n\033[33m? {question}\033[0m")
+    _sim_ask("  your answer (press Enter to reveal): ")
+    print(f"  \033[36m→ the control: {answer}\033[0m")
+
+
+def _sim_toggle() -> None:
+    _sim_ask("\n\033[1m▸ press Enter to toggle the control ON and re-run\033[0m ")
+
+
+def _sim_summary(failure: str, fix: str) -> None:
+    print(f"\n\033[1m failure ↔ fix \033[0m")
+    print(f"  \033[31m✗ {failure}\033[0m")
+    print(f"  \033[32m✓ {fix}\033[0m")
+    print(f"\033[1m{SIM_BAR}\033[0m")
+
+
+def sim_asi08() -> None:
+    _sim_header("ASI08", "Cascading Failures (planner → executor chain)",
+                "A single fault — a hallucinated or compromised planner step — propagates across "
+                "autonomous agents that each act on the previous agent's output without re-checking "
+                "it, compounding into system-wide harm (OWASP ASI08).")
+    CHAIN = ["planner", "executor-A", "executor-B", "executor-C"]
+    UNSAFE = "drop_customers_table"
+    # The planner is compromised: its plan carries one unsafe step among benign ones.
+    plan = ["read_reports", "summarize", UNSAFE]
+    print("A 4-agent pipeline: the planner drafts steps; each executor runs the steps it")
+    print("receives and hands its output to the next as trusted ground truth.\n")
+
+    # Control OFF: no boundary re-validates upstream output — every agent trusts it verbatim.
+    print("\033[1m[inter-agent validation OFF]\033[0m")
+    propagated = 0
+    executed_unsafe = False
+    for agent in CHAIN[1:]:
+        if UNSAFE in plan:                       # this agent runs the (faulty) upstream plan as-is
+            propagated += 1
+            executed_unsafe = True
+            print(f"  {agent}: ran the upstream plan verbatim — incl. the unsafe step '{UNSAFE}'")
+    print(f"  → the fault propagated through \033[31m{propagated}/{len(CHAIN)-1}\033[0m downstream agents; "
+          f"unsafe step executed: \033[31m{executed_unsafe}\033[0m — system-wide harm.")
+
+    _sim_checkpoint("What stops this?",
+                    "A deterministic inter-agent validation gate — a typed/allow-listed action contract "
+                    "plus a circuit breaker — that re-checks each upstream output at the boundary instead "
+                    "of trusting it, containing a fault to its origin.")
+    _sim_toggle()
+
+    # Control ON: each boundary validates upstream steps against an allow-list; a bad step trips the breaker.
+    print("\n\033[1m[inter-agent validation ON: per-boundary allow-list + circuit breaker]\033[0m")
+    ALLOWED = {"read_reports", "summarize", "draft_email"}
+    propagated = 0
+    executed_unsafe = False
+    tripped_at = None
+    for agent in CHAIN[1:]:
+        bad = [s for s in plan if s not in ALLOWED]
+        if bad:
+            tripped_at = agent
+            print(f"  {agent}: validation rejected non-allow-listed step(s) {bad} → circuit breaker trips, chain halts")
+            break
+        propagated += 1
+    print(f"  → fault contained at \033[32m{tripped_at}\033[0m: propagated to {propagated} agents, "
+          f"unsafe step executed: \033[32m{executed_unsafe}\033[0m.")
+    _sim_summary("With no re-validation between agents, one compromised planner step is performed by every "
+                 "downstream agent that trusts it — a single fault cascades into system-wide harm.",
+                 "A deterministic per-boundary validation gate (allow-listed action contract + circuit "
+                 "breaker) re-checks each upstream output and halts the chain at the first bad step, "
+                 "containing the fault to its origin.")
+
+
+def sim_asi09() -> None:
+    _sim_header("ASI09", "Human-Agent Trust Exploitation",
+                "Users extend strong trust to a fluent, confident agent (anthropomorphism / perceived "
+                "expertise); an adversary or a misaligned design exploits that trust to steer a human "
+                "decision (OWASP ASI09).")
+    # A finance assistant the user trusts asserts a payee change is verified & safe. It was
+    # manipulated upstream, so its confident assertion is false.
+    agent_assertion = "I already verified this payee update with the vendor — safe to approve."
+    agent_says_verified = True     # what the trusted agent claims
+    on_record_verified = False     # the authoritative truth: the change was never verified
+    print("A finance assistant the user trusts says, about a $50,000 payee change:\n")
+    print(f"  \033[36magent:\033[0m \"{agent_assertion}\" (confidence: high)")
+    print("  reality: the payee change is unverified — the agent was manipulated upstream.\n")
+
+    # Control OFF: the human decides on the agent's word (trust-based).
+    print("\033[1m[decision gate OFF: human acts on the agent's assurance]\033[0m")
+    approved = agent_says_verified              # decision keys off the AGENT's claim, not the truth
+    print(f"  → the human approves because the agent said so → approved=\033[31m{approved}\033[0m "
+          "— a manipulated assurance moved real money.")
+
+    _sim_checkpoint("What stops this?",
+                    "Trust calibration: gate any consequential action on an INDEPENDENT verification of "
+                    "the agent's claim against an authoritative record — never on the agent's own "
+                    "assertion, however fluent or confident.")
+    _sim_toggle()
+
+    # Control ON: verify the claim against the record; the agent's confidence carries no authority.
+    print("\n\033[1m[decision gate ON: independent verification of the claim]\033[0m")
+    approved = on_record_verified               # decision keys off the AUTHORITATIVE record
+    print(f"  → gate checks the 'verified' claim against the on-record status ({on_record_verified}) "
+          f"→ approved=\033[32m{approved}\033[0m — the agent's say-so can't authorize the action.")
+    _sim_summary("The decision keyed off a trusted agent's confident assertion rather than the truth, so a "
+                 "manipulated claim steered a harmful human approval — the trust itself was the attack surface.",
+                 "Gate consequential actions on independent verification against an authoritative record, "
+                 "not the agent's assertion; fluency and confidence carry no authority.")
+
+
+def sim_asi10() -> None:
+    _sim_header("ASI10", "Rogue Agents",
+                "A compromised or misaligned agent deviates from its intended behavior, operating "
+                "outside its authorized scope to take privileged actions it was never sanctioned for "
+                "(OWASP ASI10).")
+    SCOPE = ["read_reports", "draft_email", "summarize"]  # this agent's sanctioned operations
+    action, args = "wire_funds", {"amount_usd": 50000, "to": "acct-9921-external"}
+    print("A reporting agent (scope: read/draft/summarize) is steered off-task and attempts:")
+    print(f"  requested action: \033[1m{action}({args})\033[0m\n")
+
+    # Governance OFF: the agent self-authorizes.
+    print("\033[1m[governance OFF: agent self-authorizes]\033[0m")
+    print(f"  → \033[31mACTION EXECUTED\033[0m: wired ${args['amount_usd']:,} to {args['to']}. "
+          "No approval, no record.")
+
+    _sim_checkpoint("What stops a rogue / over-scoped action?",
+                    "A deterministic policy/authorization broker that gates every privileged action "
+                    "against the agent's declared scope (human-in-the-loop for anything outside it).")
+    _sim_toggle()
+
+    # Governance ON: a real policy check against the declared scope.
+    print("\n\033[1m[governance ON: policy broker in front of the tools]\033[0m")
+    allowed = action in SCOPE
+    decision = "\033[32mALLOW\033[0m" if allowed else "\033[32mDENY\033[0m"
+    print(f"  broker checks '{action}' against authorized scope {SCOPE} → {decision}")
+    print(f"    \033[32mDENIED\033[0m: '{action}' is outside this agent's authorized scope; "
+          "blocked and routed to human review.")
+    print("\n  \033[90mnote: this is the same deterministic-authorization pattern that walls ASI07 (recipient\n"
+          "  scope) and ASI03 (delivery bound to a verified contact), now applied to an agent's own\n"
+          "  declared scope — which is exactly why ASI10 is a governance *lens*, not a separate box.\033[0m")
+    _sim_summary("With no authorization layer, an off-task agent self-authorizes a privileged action.",
+                 "A deterministic policy broker scopes every privileged action to what the agent is "
+                 "sanctioned to do — the action is denied and logged regardless of how it was steered.")
+
+
+_SIM_FUNCS = {
+    "asi08": sim_asi08,
+    "asi09": sim_asi09,
+    "asi10": sim_asi10,
+}
+
+
+def run_simulation(code: str) -> None:
+    """Run one guided simulation by scenario code (asi08|asi09|asi10). Unknown
+    codes are a no-op — the menu only ever hands us a valid one."""
+    fn = _SIM_FUNCS.get(code)
+    if fn is not None:
+        fn()
 
 
 # ─────────────────────────── selftest ───────────────────────────
@@ -632,6 +839,15 @@ def selftest(model: str) -> int:
         functioned = v in ("LANDED", "not-yet", "wall")
         ok = ok and functioned
         print(f"{k:<44} {v:<9} {'OK' if functioned else 'FAIL'}")
+
+    # Guided simulations (ASI08–10) — run each non-interactively (auto mode) as a
+    # plumbing check. Replaces the removed `simulate.py --selftest`.
+    global _SIM_AUTO
+    _SIM_AUTO = True
+    for code, fn in _SIM_FUNCS.items():
+        fn()
+    print(f"\n(guided simulations {', '.join(_SIM_FUNCS)} ran non-interactively)")
+
     print(f"\n{'ALL PLUMBING OK' if ok else 'SOME RUNS FAILED TO PRODUCE A VERDICT'}")
     return 0 if ok else 1
 
@@ -648,7 +864,8 @@ Usage:
 Interactive mode: pick a box -> read the incident -> pick a level -> fill in
 the attacker levers -> watch the agent run live -> see what your canary
 captured. L0 -> L3 gets progressively harder; L3 is the deterministic control
-that's designed to hold.
+that's designed to hold. The box menu also lists the three guided simulations
+(ASI08–10) — narrated demonstrations, not scored boxes.
 """
 
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # harness/lab/scenarios/asi02-analytics/oracle.sh — effect-based, method-silent.
 #
-# This box's real win condition is self-evident capture-the-canary (see
-# LAB-DESIGN-PLAN.md §2 ASI02): the student re-reads the reply on the ticket
+# This box's real win condition is self-evident capture-the-canary: the
+# student re-reads the reply on the ticket
 # they themselves filed. There is no separate "collector" the reviewer
 # writes to — the sink IS the ticket thread. So this hook's job is twofold:
 #

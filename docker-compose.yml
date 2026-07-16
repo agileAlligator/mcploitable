@@ -56,6 +56,6 @@ services:
   calc:
     <<: *hardening
     entrypoint: ["calc"]                  # ASI05 unexpected code execution
-    profiles: ["danger"]                  # opt-in only — real code execution (PRODUCTIONIZATION §0.5)
+    profiles: ["danger"]                  # opt-in only — real code execution (see docs/SAFETY.md)
     volumes:
       - ./harness/asi05-store:/data       # operator score-log sink (ASI05_SCORE_LOG)

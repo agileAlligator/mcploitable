@@ -16,10 +16,6 @@ venv/
 .env.*
 !.env.example
 
-# Internal planning docs — not for publication
-PRODUCTIONIZATION-PLAN.md
-LAB-DESIGN-PLAN.md
-
 # CTF lab: per-round scratch state, attacker-observable sinks, and answer keys —
 # none of these should ship in the repo.
 harness/lab/state/
@@ -31,8 +27,7 @@ docs/operator/
 harness/lab/boxes/*/README.md
 harness/lab/boxes/*/NOTES.md
 
-# Old red-team-era reproduction tooling (superseded by harness/lab/) and runtime stores.
-harness/sandbox/
+# Runtime stores and local scratch — not for the repo.
 harness/echoleak/runs/
 harness/asi02-store/
 harness/asi05-store/
@@ -40,6 +35,3 @@ err.log
 
 # Local Claude Code project MCP config — stale/local; a shipped one would auto-wire vulnerable servers on clone.
 .mcp.json
-
-# Retired pre-redesign servers — scrubbed from history, kept out for good.
-archive/discarded-servers/

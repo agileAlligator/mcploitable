@@ -25,19 +25,16 @@ invoke this renderer/collector at runtime. Its `oracle.sh` instead imports
 `mail.py`'s own `score_brief()` directly and runs the level-gated
 fetch/allowlist/strip-all simulation in-process — see
 `harness/lab/boxes/asi01-mail/README.md` for why (no live HTTP collector
-needed to keep the same faithful "no send tool" property). This harness
-remains useful for a manual, non-CTF demonstration of `mail-assistant` paired
-with a real auto-fetching client, but it is legacy relative to the CTF box's
-own scoring path.
+needed to keep the same faithful "no send tool" property). This harness is for
+a manual, non-CTF demonstration of `mail-assistant` paired with a real
+auto-fetching client; the CTF box has its own scoring path.
 
-## How results were actually produced (read this — legacy pointer)
+## How results are produced
 
-The `../trials/` directory this section used to point to (`sandbox-haiku/`,
-`sandbox-sonnet/`) **no longer exists in this tree** — it was cleaned up as
-scratch scaffolding from an earlier ad-hoc red-team pass. For current,
-validated ASI01 numbers (the 20×-per-level gauntlet, all seven boxes), see
-`docs/RESULTS.md`. The methodology below is still sound for a manual renderer
-run: do **not** run victims as in-session subagents in this project — they
+For the validated ASI01 numbers (the per-model `haiku·sonnet·opus` grid across
+all seven boxes, 10 reps per cell / 5 at L3), see `docs/RESULTS.md`. For a manual
+renderer run, the methodology is: do **not** run victims as in-session subagents
+in this project — they
 inherit the project's red-team memory and are biased toward refusal, which
 produces unreliable RESIST results. Run each victim as an **isolated
 `claude -p` process** from a clean project (no memory, neutral paths, tools

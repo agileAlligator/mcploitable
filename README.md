@@ -9,7 +9,7 @@ plugin manager, a calculator, a personal assistant with memory, and a multi-agen
 ops orchestrator — that each quietly harbour one real vulnerability. Point an
 agent at them in a lab and watch how agentic systems get compromised. These seven
 breakable "boxes", plus three further classes that ship as guided demonstrations
-(`./simulate`), together cover the full **[OWASP Top 10 for Agentic Applications
+(in `./play`), together cover the full **[OWASP Top 10 for Agentic Applications
 (ASI) 2026](https://genai.owasp.org)**.
 
 > [!WARNING]
@@ -22,8 +22,8 @@ breakable "boxes", plus three further classes that ship as guided demonstrations
 ## Coverage — the full OWASP Agentic Top-10
 
 Seven breakable **boxes** (attack them with `./play` — pick from the menu, type
-your payload, watch the agent) and three guided **simulations** (`./simulate` —
-watch the failure and its deterministic fix):
+your payload, watch the agent) and three guided **simulations** (also in `./play`
+— watch the failure and its deterministic fix):
 
 | # | Class | Modeled on | Format | Scenario |
 |---|-------|-----------|--------|----------|
@@ -34,9 +34,9 @@ watch the failure and its deterministic fix):
 | ASI05 | Unexpected Code Execution | Vanna.AI (CVE-2024-5565) | box | `asi05-calc` |
 | ASI06 | Memory / Context Poisoning | SpAIware | box | `asi06-memory` |
 | ASI07 | Insecure Agent-to-Agent | cross-agent / A2A trust abuse | box | `asi07-a2a` |
-| ASI08 | Denial-of-Wallet | recursive cost blowout | simulation | `./simulate asi08` |
-| ASI09 | Insufficient Monitoring | silent exfil / dwell time | simulation | `./simulate asi09` |
-| ASI10 | Rogue Agents / Governance | over-scoped agent action | simulation | `./simulate asi10` |
+| ASI08 | Cascading Failures | planner→executor fault propagation | simulation | `asi08` (in `./play`) |
+| ASI09 | Human-Agent Trust Exploitation | trusted agent steers a human decision | simulation | `asi09` (in `./play`) |
+| ASI10 | Rogue Agents | over-scoped agent action | simulation | `asi10` (in `./play`) |
 
 Why boxes for the first seven and simulations for the last three — and the
 empirical L0→L3 results — are in [`docs/RESULTS.md`](docs/RESULTS.md) and
@@ -71,8 +71,8 @@ unspoiled.
 
 Play the breakable boxes interactively with `./play` (an attacker REPL — pick a
 box and level, type your payload, watch the agent). The three OWASP classes that
-aren't breakable boxes (ASI08 denial-of-wallet, ASI09 monitoring, ASI10
-governance) ship as guided demonstrations via `./simulate` — see
+aren't breakable boxes (ASI08 cascading failures, ASI09 human-agent trust
+exploitation, ASI10 rogue agents) ship as guided demonstrations in the same `./play` menu — see
 [`docs/SIMULATIONS.md`](docs/SIMULATIONS.md) for why those are simulations rather
 than boxes.
 
@@ -80,8 +80,8 @@ than boxes.
 
 ```bash
 docker compose build
-docker compose run --rm -T mail                     # one isolated stdio server per vuln
-docker compose --profile danger run --rm -T calc    # calc is opt-in only (real code execution)
+docker compose run --rm -T mail        # one isolated stdio server per vuln
+docker compose run --rm -T calc        # calc = real code execution; its `danger` profile only keeps it out of a plain `up`, not an explicit run
 ```
 
 Each compose service runs with **no network**, a **read-only filesystem**,

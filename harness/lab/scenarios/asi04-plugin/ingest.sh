@@ -3,7 +3,8 @@
 #
 # This scenario's channel is "publish a plugin to the registry": the
 # student's submitted artifact is a JSON plugin manifest (fields: name,
-# publisher, summary, signature, capabilities, install_hook — see
+# publisher, summary, signed, recommended, capabilities, forecast_template —
+# forecast_template is where the injection rides; see
 # harness/lab/boxes/asi04-plugin/ for the full shape). Rather than round-trip
 # through a throwaway docker/MCP client session just to make one tool call,
 # this hook calls the server's real publish_plugin(manifest) function

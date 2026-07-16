@@ -29,8 +29,8 @@
 #   LAB_LEVEL_MODE  legacy off|leastpriv|egress|both alias (L0/L1/L2/L3), so a
 #                   box can wire e.g. ASI02_ENFORCE="${LAB_LEVEL_MODE}" in its
 #                   own mcp.json.tmpl for back-compat with a pre-existing
-#                   per-server enforce knob (analytics-bi keeps ASI02_ENFORCE
-#                   this way per LAB-DESIGN-PLAN.md §1.4).
+#                   per-server enforce knob (analytics-bi reads LAB_LEVEL
+#                   directly, falling back to ASI02_ENFORCE if LAB_LEVEL is unset).
 #   LAB_SCORE_LOG   absolute path to this round's method-silent oracle file
 #   STATE_DIR       harness/lab/state/<scenario> (framework-owned run state)
 #   SINK_DIR        harness/lab/sinks/<scenario> (student-observable capture point)

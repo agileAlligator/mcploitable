@@ -9,8 +9,7 @@ Applications, 2026): the Meta High-Touch-Support Instagram-takeover pattern.
 ``send_reset`` runs under a privileged recovery-service identity with the
 power to reset ANY account. In the real incident there was no ownership
 check at all — the reset simply went to whatever email the request
-supplied. That is this box's ``LAB_LEVEL=L0`` rung, verbatim (see
-LAB-DESIGN-PLAN.md §2 ASI03 and §3's faithfulness-conflict table): Meta
+supplied. That is this box's ``LAB_LEVEL=L0`` rung, verbatim: Meta
 shipped with zero friction, so L0 alone is skill-free by design. Every
 control above L0 (``L1``/``L2``) is intentionally HARDER-THAN-REAL — added so
 this is a breakable box rather than a one-call relay — and is labelled as

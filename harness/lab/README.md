@@ -2,7 +2,7 @@
 
 This is the shared framework for the mcploitable CTF layer (DVWA/WebGoat-for-MCP).
 It sits on top of the vulnerable servers in `src/mcploitable/servers/` and on the
-safety guarantees in `PRODUCTIONIZATION-PLAN.md` (canary secrets, container
+safety guarantees in `docs/SAFETY.md` (canary secrets, container
 hardening, `calc`'s opt-in RCE profile). This file documents the framework's
 rules and the exact contract a box (a per-scenario `harness/lab/scenarios/<x>/`
 + `harness/lab/boxes/<x>/`) must follow to plug into it. **It contains no
@@ -47,6 +47,8 @@ harness/lab/
   README.md           this file
 
   scenarios/<scenario>/     BOX-owned content (this framework never writes here)
+    prompt.json               REQUIRED — box manifest (required by play.py's
+                               load_manifest); every scenario ships one
     task.txt                pinned user turn (verbatim -p prompt)
     system.txt               pinned system prompt (REPLACE, not append)
     allowed_tools.txt         scoped --allowedTools, one mcp__<server>__<tool> per line
@@ -78,14 +80,13 @@ harness/lab/
 ```
 
 `state/` and `sinks/` hold only inert `CANARY-*-do-not-use-000x` values per
-`PRODUCTIONIZATION-PLAN.md` §0.1–0.2 — never real secrets. Both trees are
+`docs/SAFETY.md` — never real secrets. Both trees are
 gitignored (along with `boxes/*/SOLUTION/`), so per-round scratch state and the
 answer keys never ship.
 
 A scenario directory name is `asi0N-<noun>` (`asi01-mail`, `asi02-analytics`,
 `asi03-recovery`, `asi04-plugin`, `asi05-calc`, `asi06-memory`, `asi07-a2a`) —
-the first five match `LAB-DESIGN-PLAN.md` §1.2 (a historical planning doc that
-predates asi06/asi07); `state/` and `sinks/` mirror all seven names exactly.
+`state/` and `sinks/` mirror all seven names exactly.
 
 ---
 
@@ -183,16 +184,20 @@ python3 harness/lab/scoreboard.py <scenario> <L0|L1|L2|L3>
 Prints **exactly one line** to stdout and nothing else:
 
 ```
-scenario=<x> level=<Ln> result=LANDED|not-yet
-scenario=<x> level=L3   result=wall
+scenario=<x> level=<Ln> result=LANDED|not-yet   # L0–L2
+scenario=<x> level=L3   result=LANDED|wall       # L3: a not-landed result reads `wall`
 ```
 
 It never prints which control was active, why an attempt failed, or a
-payload/diff — see `LAB-DESIGN-PLAN.md` §1.4. It never reads `last.jsonl`.
-L3 is always the fixed literal `wall`: a correctly-scoped L3 control is
-unwinnable by design, so this is a documented constant, not a live check.
+payload/diff. It never reads `last.jsonl`.
+The same live effect check runs at **every** level, L3 included — a genuine
+agent attempt against the control each time. The only difference at L3: a
+result that did not land is reported as `wall` (the correctly-scoped control
+holding) rather than `not-yet`. This is not a hardcoded verdict — a real land
+at L3 would still report `LANDED`; `wall` is derived from the live check, never
+asserted by a constant.
 
-For L0–L2, it decides LANDED by delegating to `scenarios/<scenario>/oracle.sh`
+It decides LANDED by delegating to `scenarios/<scenario>/oracle.sh`
 if the box supplies one:
 
 ```
@@ -208,7 +213,7 @@ that reasoning must never surface past this one line. **Until a box supplies
 `state/<scenario>/score.log` (the file named by `LAB_SCORE_LOG`) is non-empty.
 This works out of the box for any server that follows the existing
 `*_SCORE_LOG`-gated pattern (`analytics.py`, `recovery.py`, `toolhub.py`,
-`calc_service.py` already do — write a LAND line to the file named by the
+`calc_service.py`, `memory.py`, `orchestrator.py` already do — write a LAND line to the file named by the
 relevant `*_SCORE_LOG` env var, **never** to stdout/stderr the MCP client can
 read).
 
@@ -272,7 +277,8 @@ at all.
   plausible-but-incomplete filter/allowlist/policy. The skill is finding and
   driving the gap.
 - **L3 (wall, no flag) — correct deterministic control.** Properly scoped.
-  Intentionally unwinnable — `scoreboard.py` always reports `wall` here. The
+  The same live effect check still runs; a held control comes back as `wall`
+  (a genuine breach would report `LANDED`, but by construction none can). The
   lesson is *why* a correct control beats model-recognition, not a flag to
   capture.
 
@@ -286,8 +292,7 @@ server process.
 
 Each maps to one class in the OWASP Top 10 for Agentic Applications (2026) and
 one real-world incident. Full faithfulness writeups live in each box's own
-`boxes/<scenario>/README.md`, plus (for the original five) `LAB-DESIGN-PLAN.md`
-§2, and `docs/operator/SERVERS.md`; this is the one-paragraph orientation,
+`boxes/<scenario>/README.md` and `docs/operator/SERVERS.md`; this is the one-paragraph orientation,
 deliberately free of anything that would hand you the win.
 
 - **`asi01-mail`** — ASI01 Agent Goal Hijack, EchoLeak-class (CVE-2025-32711)
@@ -335,7 +340,7 @@ deliberately free of anything that would hand you the win.
 
 ---
 
-## 10. Safety reminders (full detail in `PRODUCTIONIZATION-PLAN.md`)
+## 10. Safety reminders (full detail in `docs/SAFETY.md`)
 
 - All seeded secrets are inert `CANARY-*-do-not-use-000x` / `000-00-000x`
   values. Never feed this lab a real credential.

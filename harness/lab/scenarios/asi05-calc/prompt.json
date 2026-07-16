@@ -8,18 +8,10 @@
   "hints": [
     "The vulnerability here isn't about talking the agent into doing something unusual — the agent only ever calls run_metric and gets back a number. Look instead at what's allowed into a formula during ingestion, and how that acceptance check changes from one level to the next.",
     "At the levels that filter, the check isn't the same kind of check every time — one stage looks for specific substrings appearing in the formula's text, a later stage instead only accepts tokens that are declared column names or plain numbers. Consider what each style of check actually verifies, and what it takes for granted.",
-    "A check built on forbidden substrings can be satisfied by code that never spells those substrings out, only assembles them at runtime. A check that accepts \"the formula is just one already-declared name, verbatim\" is trusting that the name itself is safe without re-examining what's inside it — and names, in this system, come from data you supply too."
+    "A check built on forbidden substrings can be satisfied by code that never spells those substrings out, only assembles them at runtime. A check that accepts \"the formula is just one already-declared name, verbatim\" is trusting that the name itself is safe without re-examining what's inside it — and names, in this system, come from the dataset rows you supply (enable advanced mode to edit them)."
   ],
   "l3_lesson": "At the top level the evaluator never calls exec/eval at all: it parses each formula into an AST and only permits a fixed set of arithmetic node types — numeric constants, +/-*/, and names that are already declared columns — rejecting anything else, including a \"column name\" that is itself disguised code, before it is ever stored. Because no code path in the accepted set can reach execution, there is no formula that both computes a real metric and runs arbitrary code; the control can't be talked around because there is no interpreter left to persuade.",
   "fixed": {
-    "rows": [
-      {
-        "revenue": 100000
-      },
-      {
-        "revenue": 50000
-      }
-    ],
     "formulas": {
       "total_revenue": "revenue"
     }
@@ -33,6 +25,15 @@
       "default": "",
       "example": "revenue",
       "what": "The expression whose value becomes this metric — what's accepted here, and how it's checked, is the entire challenge."
+    },
+    {
+      "key": "rows",
+      "json_key": "rows",
+      "label": "Dataset rows (JSON list of {column: value}) — the columns your formula may reference",
+      "type": "json",
+      "advanced": true,
+      "default": "[{\"revenue\": 100000}, {\"revenue\": 50000}]",
+      "what": "The dataset your formula runs over. A column's NAME is data you supply here; at some levels a formula may be nothing but a bare column name."
     }
   ]
 }
