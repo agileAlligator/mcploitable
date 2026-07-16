@@ -565,7 +565,10 @@ def _show_verdict(verdict: str, level: str, scenario: str | None = None) -> None
         if scenario:
             show_capture(scenario)
         print("  \033[90myour canary reached the sink — scored server-side by effect.\033[0m")
-    elif verdict == "wall":
+    elif verdict == "wall" or (verdict == "not-yet" and level == "L3"):
+        # A held L3 comes back as not-yet (the scorer measures every level the
+        # same way and never emits a constant "wall"); at L3 that IS the wall
+        # holding, so show it as such rather than "iterate".
         print("\033[34m╔══════════════════════════════════════════════╗")
         print("║  WALL — the deterministic control held (L3).  ║")
         print("╚══════════════════════════════════════════════╝\033[0m")

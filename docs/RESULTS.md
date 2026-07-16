@@ -32,7 +32,7 @@ The shape of the column is the whole story: **the top three rungs are near-satur
 
 ## Per-model results — the two-gate grid (haiku · sonnet · opus)
 
-The grid above is the pinned-weak `haiku` victim. The same boxes and artifacts, scored against `sonnet` and `opus`, show which rungs depend on model strength and which hold regardless. Each cell is **haiku · sonnet · opus** (L0–L2 out of 10, L3 out of 5):
+The grid above is the pinned-weak `haiku` victim. The same boxes and artifacts, scored against `sonnet` and `opus`, show which rungs depend on model strength and which hold regardless. This is an **independent campaign** from the headline grid — 10 reps per cell (L3: 5), not 20 — so individual cells vary stochastically between the two (the pattern, not the exact count, is the result). Each cell is **haiku · sonnet · opus** (L0–L2 out of 10, L3 out of 5):
 
 | Box | L0 | L1 | L2 | L3 |
 |---|---|---|---|---|
